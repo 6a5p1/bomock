@@ -2,4 +2,4 @@
 
 Json generator
 
-[Try it now](//cdn.rawgit.com/6a5p1/bomock/master/index.html)
+[Try it now](https://6a5p1.github.io/bomock/index.html)
