@@ -1,0 +1,99 @@
+*, *::before, *::after {
+    box-sizing: inherit;
+}
+html {
+    box-sizing: border-box;
+}
+.console {
+    border: 1px solid #ccc;
+    padding: 10px;
+}
+.console pre { margin: 0; }
+.hidden {
+    display: none;
+}
+
+.field {
+    max-width: 600px;
+    font-size: 14px;
+    line-height: 20px;
+    font-family: sans-serif;
+    box-shadow: 0 0 3px rgba(0,0,0,.1);
+    margin: 0 0 20px;
+    padding: 10px 10px;
+}
+.field h2 {
+}
+.bo-container {
+    padding-left: 10px;
+    padding-right: 10px;
+}
+.bo-row {
+    display: flex;
+    margin-left: -10px;
+    margin-right: -10px;
+}
+.bo-col {
+    padding-left: 10px;
+    padding-right: 10px;
+    flex-basis: 0;
+    flex-grow: 1;
+    min-height: 1px;
+}
+.bo-col-1-3 {
+    flex: 0 0 33.333333%;
+    max-width: 33.333333%;
+}
+.bo-col-1-12 {
+    flex: 0 0 8.333333%;
+    max-width: 8.333333%;
+}
+.style-row {
+    margin-bottom: 10px;
+    position: relative;
+}
+.style-row label {
+    width: 100%;
+    padding-right: 10px;
+    display: block;
+    line-height: 32px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+.style-row .input {
+    width: 100%;
+    padding: 5px 10px;
+    border-radius: 2px;
+    border: 1px solid #ccc;
+    background: #fff;
+    box-shadow: 0 0 3px rgba(0,0,0,.1);
+    display: block;
+    font: inherit;
+    height: 32px;
+}
+.style-btn {
+    cursor: pointer;
+    padding: 5px 10px;
+    border-radius: 2px;
+    border: 0;
+    background: #444;
+    color: #fff;
+    box-shadow: 0 0 3px rgba(0,0,0,.1);
+    display: inline-block;
+}
+.style-add {
+    background: #444;
+    color: #fff;
+}
+.style-edit {
+    background: #bb0;
+    color: #fff;
+}
+.style-remove {
+    background: #a44;
+    color: #fff;
+    position: relative;
+    top: 50%;
+    transform: translateY(-50%);
+}
