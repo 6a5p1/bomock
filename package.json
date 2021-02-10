@@ -1,0 +1,19 @@
+{
+  "name": "bomock",
+  "version": "1.0.0",
+  "description": "",
+  "main": "script.jsx",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "npx babel script.jsx -d dist",
+    "watch": "npx babel script.jsx -d dist --watch"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@babel/cli": "^7.8.0",
+    "@babel/core": "^7.8.0",
+    "@babel/plugin-transform-react-jsx": "^7.8.0"
+  }
+}

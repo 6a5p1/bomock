@@ -1,8 +1,21 @@
+function createElement(tagName, attrs = {}, ...children) {
+  if (tagName === 'fragment') return children;
+  const elem = document.createElement(tagName);
+  for (let attr in attrs) {
+    elem.setAttribute(attr, attrs[attr]);
+  }
+  for (const child of children) {
+    if (Array.isArray(child)) elem.append(...child);
+    else elem.append(child);
+  }
+  return elem;
+}
+
 class StyledWidget {
   constructor(fields = []) {
     this.fields = fields;
     this.el = document.createElement('div');
-    this.render();
+    this.update();
   }
   getPresetStyles() {
     return [
@@ -11,10 +24,12 @@ class StyledWidget {
         type: 'color'
       },
       {
-        name: 'background_color'
+        name: 'background_color',
+        type: 'color'
       },
       {
-        name: 'border_color'
+        name: 'border_color',
+        type: 'color'
       },
       {
         name: 'border_radius'
@@ -60,22 +75,22 @@ class StyledWidget {
   addStyle(index, event) {
     if (event) event.preventDefault();
     this.fields[index].styles.push(this.createStyle({is_new: true}));
-    this.render();
+    this.update();
   }
   removeStyle(index, styleIndex, event) {
     if (event) event.preventDefault();
     this.fields[index].styles.splice(styleIndex, 1);
-    this.render();
+    this.update();
   }
   toggleStyle(index, event) {
     if (event) event.preventDefault();
     this.fields[index].is_expanded = !this.fields[index].is_expanded;
-    this.render();
+    this.update();
   }
   addField(event) {
     if (event) event.preventDefault();
     this.fields.push(this.createField({is_new: true, is_expanded: true}));
-    this.render();
+    this.update();
   }
   getObject(str) {
     const arr = str.split('.');
@@ -87,10 +102,8 @@ class StyledWidget {
     event.preventDefault();
 
     const str = event.currentTarget.name;
-    const arr = str.split('.');
-    const key = arr.pop();
-    const obj = arr.join('.');
-    const object = eval(`this.${obj}`);
+    const key = str.split('.').pop();
+    const object = this.getObject(str);
     object[key] = event.currentTarget.value;
     this.updateConsole();
   }
@@ -100,8 +113,8 @@ class StyledWidget {
       'click .style-remove': (event) => { this.removeStyle(event.currentTarget.dataset.index, event.currentTarget.dataset.styleIndex, event); },
       'input .style-value': this.changeValueOf,
       'input .style-property': this.changeValueOf,
-      'blur .style-value': this.render,
-      'blur .style-property': this.render,
+      // 'change .style-value': this.update,
+      // 'change .style-property': this.update,
       'click .style-edit': (event) => { this.toggleStyle(event.currentTarget.dataset.index, event); },
       'click .field-add': this.addField,
       'change .style-preset': (event) => {
@@ -113,7 +126,7 @@ class StyledWidget {
         } else {
           this.changeValueOf(event);
         }
-        this.render(); 
+        this.update(); 
       }
     };
     Object.keys(events).forEach((key) => {
@@ -127,73 +140,85 @@ class StyledWidget {
     });
   }
   updateConsole() {
+    // return this.update();
     const cons = this.el.querySelector('.console');
     if (cons) cons.innerHTML = `<pre>${JSON.stringify(this.fields, null, 2)}</pre>`;
   }
-  render() {
+  update() {
     setTimeout(() => {
-      this.el.innerHTML = `
+      this.el.innerHTML = '';
+      this.el.appendChild(this.render());
+      this.addListeners();
+    }, 100);
+  }
+  render() {
+    return (
       <div class="bo-container">
         <div class="bo-row">
           <div class="bo-col">
-            ${this.fields.map((field, index) => (
-              `<div class="field">
-                <h2>${field.value}
-                  <button class="style-btn style-edit" data-index="${index}">${field.is_expanded ? 'collapse': 'edit'}</button>
+            {this.fields.map((field, index) => (
+              <div class="field">
+                <h2>
+                  {field.value}
+                  <button class="style-btn style-edit" data-index={index}>{field.is_expanded ? 'collapse': 'edit'}</button>
                 </h2>
-                <div class="style-container ${!field.is_expanded ? 'hidden': ''}">
+                <div class={`style-container ${!field.is_expanded ? 'hidden': ''}`}>
                   <div class="bo-row style-row">
                     <div class="bo-col bo-col-1-3 style-col">
-                      <label for="name="fields[${index}].value"><strong>Content</strong></label>
+                      <label for={`fields[${index}].value`}><strong>Content</strong></label>
                     </div>
                     <div class="bo-col style-col">
-                      <input type="text" id="name="fields[${index}].value" name="fields[${index}].value" class="input style-value" value="${field.value}">
+                      <input type="text" id={`fields[${index}].value`} name={`fields[${index}].value`} class="input style-value" value={field.value} />
                     </div>
                   </div>
-                  ${field.styles.map((style, styleIndex) => (
-                    `<div class="bo-row style-row">
+                  {field.styles.map((style, styleIndex) => (
+                    <div class="bo-row style-row">
                       <div class="bo-col bo-col-1-3 style-col">
-                        ${style.is_new ? 
-                          style.is_custom ? `
-                              <input name="fields[${index}].styles[${styleIndex}].property" type="text" class="input style-property" value="${style.property}">
-                          ` : `
-                            <select name="fields[${index}].styles[${styleIndex}].property" class="input style-preset">
-                              <option value selected disable>Select a property</option>
-                              ${this.getPresetStyles().map(preset => `
-                                <option value="${preset.name}" ${style.property == preset.name ? 'selected':''}>${preset.text || preset.name}</option>
-                              `).join('')}
-                              <option value="MANUAL">MANUAL</option>
-                            </select>
-                          `
-                        : `
-                          <label for="fields[${index}].styles[${styleIndex}].value" title="${style.property}">${style.property}</label>
-                        `}
+                        {style.is_new ? (
+                          <span>
+                            {style.is_custom ? (
+                              <input name={`fields[${index}].styles[${styleIndex}].property`} type="text" class="input style-property" value={style.property} />
+                            ) : (
+                              <select name={`fields[${index}].styles[${styleIndex}].property`} class="input style-preset">
+                                <option value="" selected={true} disabled={true}>Select a property</option>
+                                {this.getPresetStyles().map((preset) => (
+                                  <option value={preset.name} selected={style.property == preset.name}>
+                                    {preset.text || preset.name}
+                                  </option>
+                                ))}
+                                <option value="MANUAL">MANUAL</option>
+                              </select>
+                            )}
+                          </span>
+                        ) : (
+                          <label for={`fields[${index}].styles[${styleIndex}].value`} title={style.property}>{style.property}</label>
+                        )}
                       </div>
                       <div class="bo-col style-col">
-                        <input type="${
-                          (this.getPresetStyles().filter(preset => preset.name == style.property)[0]||{}).type || 'text'
-                        }" id="fields[${index}].styles[${styleIndex}].value" name="fields[${index}].styles[${styleIndex}].value" class="input style-value" value="${style.value}">
+                        <input
+                          type={`${(this.getPresetStyles().filter(preset => preset.name == style.property)[0]||{}).type || 'text'}`}
+                          id={`fields[${index}].styles[${styleIndex}].value`}
+                          name={`fields[${index}].styles[${styleIndex}].value`}
+                          class="input style-value" value={style.value} />
                       </div>
                       <div class="bo-col bo-col-1-12 style-col">
-                        <button class="style-btn style-remove" data-index="${index}" data-style-index="${styleIndex}">-</button>
+                        <button class="style-btn style-remove" data-index={index} data-style-index={styleIndex}>-</button>
                       </div>
-                    </div>`
-                  )).join('')}
+                    </div>
+                  ))}
                   <div class="style-row">
-                    <button class="style-btn style-add" data-index="${index}">+ add property</button>
+                    <button class="style-btn style-add" data-index={index}>+ add property</button>
                   </div>
                 </div>
-              </div>`
-            )).join('')}
+              </div>
+            ))}
             <button class="style-btn field-add">+ add field</button>
           </div>
           <div class="bo-col">
-            <div class="console"><pre>${JSON.stringify(this.fields, null, 2)}</pre></div>
+            <div class="console"><pre>{JSON.stringify(this.fields, null, 2)}</pre></div>
           </div>
         </div>
       </div>
-      `;
-      this.addListeners();
-    }, 0);
+    );
   }
 }
